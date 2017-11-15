@@ -1,14 +1,3 @@
-#-------------------------------------------------------------------------------
-# Name:        module1
-# Purpose:
-#
-# Author:      bamford
-#
-# Created:     09/10/2017
-# Copyright:   (c) bamford 2017
-# Licence:     <your licence>
-#-------------------------------------------------------------------------------
-
 import arcpy
 import os
 import sys
@@ -57,6 +46,7 @@ def get_current_timestamp():
     return strNewTimeStamp
 
 def create_substation_kmzs(settings_dictionary):
+    output_warning('Creating substation KMZs in {}'.format(settings_dictionary["OutputFolder"]))
     substation_name_list = get_substation_name_list(settings_dictionary)
     for substation_name in substation_name_list:
         process_substation(settings_dictionary, substation_name)
@@ -67,7 +57,7 @@ def process_substation(settings_dictionary, substation_name):
         export_mxd_to_kmz(settings_dictionary, substation_name)
         remove_mxd_for_substation(settings_dictionary, substation_name)
     except Exception as e:
-        output_message('Error whilst creating KMZ for {}: {}'.format(substation_name, e))
+        output_error('Error whilst creating KMZ for {}: {}'.format(substation_name, e))
 
 def get_substation_name_list(settings_dictionary):
     substation_name_list = list()
@@ -168,6 +158,14 @@ def substation_kmz_file_path(settings_dictionary, substation_name):
 def output_message(message):
     print message
     arcpy.AddMessage(message)
+
+def output_warning(message):
+    print message
+    arcpy.AddWarning(message)
+
+def output_error(message):
+    print message
+    arcpy.AddError(message)
 
 if __name__ == '__main__':
     main()
