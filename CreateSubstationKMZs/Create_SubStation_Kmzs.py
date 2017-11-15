@@ -53,10 +53,14 @@ def create_substation_kmzs(settings_dictionary):
     substation_total = len(substation_name_list)
     output_warning('{} substations to be processed...'.format(substation_total))
     for substation_name in substation_name_list:
-        process_substation(settings_dictionary, substation_name)
-        if (substation_number%settings_dictionary["substationLoopWarningEveryXSubstations"] == 0):
-            output_warning('Processed {} out of {}...'.format(substation_number, substation_total))
+		if (substation_name):
+			process_substation(settings_dictionary, substation_name)
+			if (substation_number%settings_dictionary["substationLoopWarningEveryXSubstations"] == 0):
+				output_warning('Processed {} out of {}...'.format(substation_number, substation_total))
+		else:
+			output_warning('Null substation name found for substation {}'.format(substation_number))
         substation_number = substation_number + 1
+		
 def process_substation(settings_dictionary, substation_name):
     try:
         create_mxd_for_substation(settings_dictionary, substation_name)
