@@ -32,6 +32,7 @@ def create_settings_dictionary():
     settings_dictionary["subStationMinimumStatus"] = 3
     settings_dictionary["subStationStatusWhereClause"] = "Status >= %s" %(settings_dictionary["subStationMinimumStatus"])
     settings_dictionary["polygonValidWhereClause"] = 'Valid = 1'
+    settings_dictionary["substationLoopWarningEveryXSubstations"] = 3
 
     return settings_dictionary
 
@@ -48,9 +49,14 @@ def get_current_timestamp():
 def create_substation_kmzs(settings_dictionary):
     output_warning('Creating substation KMZs in {}'.format(settings_dictionary["OutputFolder"]))
     substation_name_list = get_substation_name_list(settings_dictionary)
+    substation_number = 1
+    substation_total = len(substation_name_list)
+    output_warning('{} substations to be processed...'.format(substation_total))
     for substation_name in substation_name_list:
         process_substation(settings_dictionary, substation_name)
-
+        if (substation_number%settings_dictionary["substationLoopWarningEveryXSubstations"] == 0):
+            output_warning('Processed {} out of {}...'.format(substation_number, substation_total))
+        substation_number = substation_number + 1
 def process_substation(settings_dictionary, substation_name):
     try:
         create_mxd_for_substation(settings_dictionary, substation_name)
