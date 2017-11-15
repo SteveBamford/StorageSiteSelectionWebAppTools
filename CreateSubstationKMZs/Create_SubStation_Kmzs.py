@@ -115,10 +115,10 @@ def substation_where_clause(settings_dictionary, substation_name):
     return "Name = '%s' AND %s" %(substation_name, settings_dictionary["subStationStatusWhereClause"])
 
 def substation_layer_name(settings_dictionary, substation_name):
-    return "%s Substation" %(substation_name)
+    return "%s Substation" %(clean_substation_name(substation_name))
 
 def polygons_layer_name(settings_dictionary, substation_name):
-    return "%s Polygons" %(substation_name)
+    return "%s Polygons" %(clean_substation_name(substation_name))
 
 def export_mxd_to_kmz(settings_dictionary, substation_name):
     output_message("Creating KMZ for %s..." %(substation_name))
@@ -147,13 +147,16 @@ def remove_mxd_for_substation(settings_dictionary, substation_name):
         os.remove(mxd_file_path)
 
 def substation_mxd_file_path(settings_dictionary, substation_name):
-    return r"%s\Substation_%s_%s.mxd" %(settings_dictionary["OutputFolder"],substation_name,settings_dictionary["DateTimeStamp"])
+    return r"%s\Substation_%s_%s.mxd" %(settings_dictionary["OutputFolder"],clean_substation_name(substation_name),settings_dictionary["DateTimeStamp"])
 
 def substation_kmz_directory_path(settings_dictionary):
     return r"%s\%s" %(settings_dictionary["OutputFolder"],settings_dictionary["DateTimeStamp"])
 
 def substation_kmz_file_path(settings_dictionary, substation_name):
-    return r"%s\Substation_%s.kmz" %(substation_kmz_directory_path(settings_dictionary),substation_name)
+    return r"%s\Substation_%s.kmz" %(substation_kmz_directory_path(settings_dictionary),clean_substation_name(substation_name))
+
+def clean_substation_name(substation_name):
+    return substation_name.replace('/', '')
 
 def output_message(message):
     print message
