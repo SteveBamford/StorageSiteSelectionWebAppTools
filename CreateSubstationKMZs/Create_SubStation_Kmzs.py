@@ -53,12 +53,12 @@ def create_substation_kmzs(settings_dictionary):
     substation_total = len(substation_name_list)
     output_warning('{} substations to be processed...'.format(substation_total))
     for substation_name in substation_name_list:
-		if (substation_name):
-			process_substation(settings_dictionary, substation_name)
-			if (substation_number%settings_dictionary["substationLoopWarningEveryXSubstations"] == 0):
-				output_warning('Processed {} out of {}...'.format(substation_number, substation_total))
-		else:
-			output_warning('Null substation name found for substation {}'.format(substation_number))
+        if (substation_name):
+            process_substation(settings_dictionary, substation_name)
+            if (substation_number%settings_dictionary["substationLoopWarningEveryXSubstations"] == 0):
+                output_warning('Processed {} out of {}...'.format(substation_number, substation_total))
+        else:
+            output_warning('Null substation name found for substation {}'.format(substation_number))
         substation_number = substation_number + 1
 		
 def process_substation(settings_dictionary, substation_name):
@@ -83,40 +83,47 @@ def get_substation_name_list(settings_dictionary):
 def create_mxd_for_substation(settings_dictionary, substation_name):
     output_message("Creating temporary MXD for %s..." %(substation_name))
 
-    mxd_file_path = substation_mxd_file_path(settings_dictionary, substation_name)
     arcpy.env.workspace = settings_dictionary["OutputFolder"]
+    output_message('Opening base template MXD ({})...'.format(settings_dictionary["BaseTemplateMxd"])) #SDCBDBEUG
     mxd = arcpy.mapping.MapDocument(settings_dictionary["BaseTemplateMxd"])
+    output_message('Getting Layers data frame...') #SDCBDBEUG
     data_frame = arcpy.mapping.ListDataFrames(mxd, "Layers")[0]
 
     substation_layer = substation_layer_name(settings_dictionary, substation_name)
+    output_message('Creating substation layer ({})'.format(substation_layer)) #SDCBDBEUG
     arcpy.MakeFeatureLayer_management(
         settings_dictionary["SubstationFeatureClassPath"],
         substation_layer,
         substation_where_clause(settings_dictionary, substation_name))
     substation_layer_object = arcpy.mapping.Layer(substation_layer)
     substation_base_layer = arcpy.mapping.Layer(settings_dictionary["BaseTemplateSubstationLayer"])
+    output_message('Updating layer...')  # SDCBDBEUG
     arcpy.mapping.UpdateLayer(data_frame, substation_layer_object, substation_base_layer, True)
+    output_message('Adding layer...')  # SDCBDBEUG
     arcpy.mapping.AddLayer(
         data_frame,
         substation_layer_object,
         "Bottom")
 
     polygons_layer = polygons_layer_name(settings_dictionary, substation_name)
+    output_message('Creating polygon layer ({})'.format(polygons_layer)) #SDCBDBEUG
     arcpy.MakeFeatureLayer_management(
         settings_dictionary["PolygonFeatureClassPath"],
         polygons_layer,
         polygons_where_clause(settings_dictionary, substation_name))
     polygons_layer_object = arcpy.mapping.Layer(polygons_layer)
     polygons_base_layer = arcpy.mapping.Layer(settings_dictionary["BaseTemplatePolygonsLayer"])
+    output_message('Updating layer...')  # SDCBDBEUG
     arcpy.mapping.UpdateLayer(data_frame, polygons_layer_object, polygons_base_layer, True)
+    output_message('Adding layer...')  # SDCBDBEUG
     arcpy.mapping.AddLayer(
         data_frame,
         polygons_layer_object,
         "Bottom")
 
-	##TODO 2) Set label of substation point and polygons
-	##TODO 3) Update appearance of point and polygon layers
-    mxd.saveACopy(substation_mxd_file_path(settings_dictionary, substation_name))
+    mxd_file_path = substation_mxd_file_path(settings_dictionary, substation_name)
+    output_message('Saving MXD as ({})...'.format(mxd_file_path))  # SDCBDBEUG
+    mxd.saveACopy(mxd_file_path)
 
 def polygons_where_clause(settings_dictionary, substation_name):
     return "SubStation = '%s' AND %s" %(substation_name, settings_dictionary["polygonValidWhereClause"])
