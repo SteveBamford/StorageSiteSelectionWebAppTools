@@ -1,14 +1,3 @@
-#-------------------------------------------------------------------------------
-# Name:        Storage_Create_Shapefile_And_Kmz
-# Purpose:     Create a single shapefile and KMZ file
-#
-# Author:      S. Bamford
-#
-# Created:     09/10/2017
-# Copyright:   (c) RES 2017
-# Licence:     <your licence>
-#-------------------------------------------------------------------------------
-
 import arcpy
 import os
 import sys
@@ -121,7 +110,8 @@ def create_shapefile_and_zip(settings_dictionary):
 def create_folder_for_shapefile(settings_dictionary):
     #create folder for shapefile
     if not os.path.exists(settings_dictionary["outputShapeFileFolder"]):
-        os.makedirs(settings_dictionary["outputShapeFileFolder"])
+		output_warning('Creating {} directory'.format(settings_dictionary["outputShapeFileFolder"]))
+		os.makedirs(settings_dictionary["outputShapeFileFolder"])
 
 def add_centroids(settings_dictionary):
 
@@ -229,6 +219,10 @@ def report_issue(settings_dictionary):
 def output_message(message):
     print message
     arcpy.AddMessage(message)
+
+def output_warning(message):
+	print message
+	arcpy.AddWarning(message)
 
 def tidy_up(settings_dictionary, ok):
     if (ok):
