@@ -37,7 +37,7 @@ def create_settings_dictionary():
     outputFeatureClass = r"%s\LandRegistryShape_%s_%s" %(settings_dictionary["OutputGDB"] ,strRunName,strNewTimeStamp)
     outputShapeFileFolderZipped ="%s.zip" %(outputShapeFileFolder)
     outputPDF =r"%s\LandRegistryShape_%s_%s.pdf" %(settings_dictionary["OutputFolder"],strRunName,strNewTimeStamp)
-    outputMXD = r"%s\LandRegistryShape_%s_%s.mxd" %(settings_dictionary["OutputFolder"],strRunName,strNewTimeStamp)
+    outputMXD = r"%s\%s.mxd" %(settings_dictionary["OutputFolder"],strNewTimeStamp)
     temporaryLayer = r"%s\LandRegistryShape_%s_%s_lyr" %(settings_dictionary["OutputFolder"],strRunName,strNewTimeStamp)
     outputKMZ = r"%s\LandRegistryShape_%s_%s.kmz" %(settings_dictionary["OutputFolder"],strRunName,strNewTimeStamp)
 
@@ -184,9 +184,10 @@ def create_mxd(settings_dictionary):
     arcpy.SelectLayerByAttribute_management(lyrLayer,"CLEAR_SELECTION", "")
     arcpy.ApplySymbologyFromLayer_management(lyrs, settings_dictionary["styleLYR"])
     arcpy.mapping.ExportToPDF(mxd,settings_dictionary["outputPDF"], "page_layout")
+    output_warning('PDF created at {}'.format(settings_dictionary["outputPDF"]))
     mxd.save()
     del mxd
-    output_message("mxd created")
+    output_message("MXD created")
 
 def zip_shapefile(settings_dictionary):
     output_message("Zip shapefile...")
@@ -199,7 +200,7 @@ def zip_shapefile(settings_dictionary):
                 zip.write(fn,fn[rootlen:])
 
     zip.close()
-    output_message("Shapefile zipped")
+    output_warning("Shapefile zipped to {}".format(settings_dictionary["outputShapeFileFolderZipped"]))
 
 def export_shapefile(settings_dictionary):
     output_message("Exporting shapefile...")
@@ -210,7 +211,7 @@ def create_kmz(settings_dictionary):
     output_message("Creating KMZ...")
     arcpy.MakeFeatureLayer_management(settings_dictionary["outputFeatureClass"], settings_dictionary["temporaryLayer"])
     arcpy.LayerToKML_conversion(settings_dictionary["temporaryLayer"], settings_dictionary["outputKMZ"])
-    output_message("KMZ created")
+    output_warning("KMZ created at {}".format(settings_dictionary["outputKMZ"]))
 
 def report_issue(settings_dictionary):
     msg = 'ERROR: No polygons found in %s with query filter: %s' %(settings_dictionary["InputFeatureClassViewPath"], settings_dictionary["ViewWhereClause"])
@@ -224,7 +225,12 @@ def output_warning(message):
 	print message
 	arcpy.AddWarning(message)
 
+def remove_temp_file(temp_file_path):
+    if (os.path.isfile(temp_file_path)):
+        os.remove(temp_file_path)
+
 def tidy_up(settings_dictionary, ok):
+    remove_temp_file(settings_dictionary["outputMXD"])
     if (ok):
         shutil.rmtree(settings_dictionary["outputShapeFileFolder"])
     arcpy.Delete_management(settings_dictionary["outputFeatureClass"])
