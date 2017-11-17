@@ -1,15 +1,4 @@
-#-------------------------------------------------------------------------------
-# Name:        MapLandRegistryDataToSubstationPolygons
-# Purpose:
-#
-# Author:      bamford
-#
-# Created:     05/10/2017
-# Copyright:   (c) bamford 2017
-# Licence:     <your licence>
-#-------------------------------------------------------------------------------
 import arcpy
-#import arcinfo
 import os
 from datetime import datetime
 import pyodbc
@@ -74,28 +63,28 @@ def main():
 def create_mapping_shapefile(mapping_shapefile_path):
 
     if (mapping_shapefile_path.endswith('.shp') and os.path.isfile(mapping_shapefile_path)):
-        arcpy.AddMessage("Deleting existing shapefile {}...".format(mapping_shapefile_path))
+        output_message("Deleting existing shapefile {}...".format(mapping_shapefile_path))
         arcpy.Delete_management(mapping_shapefile_path)
 
     temp_polygon_path = r'\\kl-fs-003\gis_storage\Projects\ENERGY_STORAGE\SITE_SELECTION\Python\Temporary\filtered_polygon_lyr'
     temp_land_reg_path = r'\\kl-fs-003\gis_storage\Projects\ENERGY_STORAGE\SITE_SELECTION\Python\Temporary\land_reg_lyr'
 
-    arcpy.AddMessage("Creating local polygon layer...")
+    output_message("Creating local polygon layer...")
     arcpy.MakeFeatureLayer_management(r'\\kl-fs-003\gis_storage\Ancillary\RES_software_Services\GeoDB_UK.sde\GeoDB_UK.SDE.GB_Storage_Property_Sketch_Layer',temp_polygon_path, "Valid = 1 AND Download_Land_Data = 1")
-    arcpy.AddMessage("Creating local Land Registry layer...")
+    output_message("Creating local Land Registry layer...")
     arcpy.MakeFeatureLayer_management(r'\\kl-fs-003\gis_storage\Ancillary\RES_software_Services\GeoDB_UK.sde\GeoDB_UK.SDE.ENG_Land_Registry_Parcels',temp_land_reg_path)
 
-    arcpy.AddMessage("Creating shapefile: {}...".format(mapping_shapefile_path))
+    output_message("Creating shapefile: {}...".format(mapping_shapefile_path))
     arcpy.Intersect_analysis(in_features="{} #;{} #".format(temp_polygon_path, temp_land_reg_path), out_feature_class=mapping_shapefile_path, join_attributes="ALL", cluster_tolerance="-1 Unknown", output_type="INPUT")
 
-    arcpy.AddMessage("Removing local polygon layer...")
+    output_message("Removing local polygon layer...")
     arcpy.Delete_management(temp_polygon_path)
-    arcpy.AddMessage("Removing local Land Registry layer...")
+    output_message("Removing local Land Registry layer...")
     arcpy.Delete_management(temp_land_reg_path)
 
 def populate_mapping_database_table_from_shapefile(mapping_shapefile_path):
 
-    arcpy.AddMessage("Populate mapping database table...")
+    output_message("Populate mapping database table...")
 
     fields = ['FID_GB_Sto', 'Site_Ident', 'Title_Numb', 'Tenure', 'Proprietor', 'Address', 'Revision_D']
 
@@ -146,7 +135,9 @@ def add_site_identifier_mapping_details_to_database(mapping_details):
         execute_sql_on_tblStoragePolygonToLandRegistryMapping(sql)
 
     if (length >= 16):
-        arcpy.AddWarning("Too many mapping items for polygon ID {} ({} found)".format(mapping_details.polygon_id, index + 1))
+        output_warning("Too many mapping items for polygon ID {} ({} found)".format(mapping_details.polygon_id, index + 1))
+    else:
+        output_message('{} mapping items added for polygon ID {}'.format(length, mapping_details.polygon_id))
 
 def generate_sql(polygon_oid, mapping_number, title_number, tenure, proprietor, address):
     return "UPDATE [sde].[tblStoragePolygonToLandRegistryMapping] SET [Title_Number_{}] = {} ,[Tenure_{}] = {}, [Proprietor_{}] = {},[Address_{}] = {} WHERE [Storage_Polygon_ID] = {}".format(
@@ -178,10 +169,20 @@ def execute_sql_on_tblStoragePolygonToLandRegistryMapping(sql):
 
         conn.close()
     except Exception as e:
-        arcpy.AddError(e)
+        output_error(e)
         conn.close()
 
-def provide_output(text):
-    print('{}: {}'.format(str(datetime.now()), text))
+def output_message(message):
+    print message
+    arcpy.AddMessage(message)
+
+def output_warning(message):
+    print message
+    arcpy.AddWarning(message)
+
+def output_error(message):
+    print message
+    arcpy.AddError(message)
+
 if __name__ == '__main__':
     main()
