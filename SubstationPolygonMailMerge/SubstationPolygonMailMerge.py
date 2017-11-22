@@ -3,6 +3,7 @@ import os
 import sys
 import datetime
 import csv
+import pyodbc
 
 class LandownerDetails:
 
@@ -88,9 +89,6 @@ def create_settings_dictionary():
     debug = False #debug = True
     settings_dictionary = dict()
     settings_dictionary["OutputFolder"] = r'\\kl-fs-003\GIS_Storage\Projects\ENERGY_STORAGE\SITE_SELECTION\Outbox'
-    settings_dictionary["InputDatabase"] = r'\\kl-fs-003\GIS_Storage\Ancillary\RES_software_Services\GeoDB_UK.sde'
-    settings_dictionary["InputPolygonFeatureClass"] = 'GeoDB_UK.sde.GB_STORAGE_SUBSTATION_SKETCH_POLYGONS'
-    settings_dictionary["PolygonFeatureClassPath"] = os.path.join(settings_dictionary["InputDatabase"],settings_dictionary["InputPolygonFeatureClass"])
 
     if (debug == True):
         output_message("Running in debug mode")
@@ -99,8 +97,6 @@ def create_settings_dictionary():
     settings_dictionary["DateTimeStamp"] = get_current_timestamp()
     outputCsvFileName = "MailMerge_%s.csv" %(settings_dictionary["DateTimeStamp"])
     settings_dictionary["outputCsvFilePath"] = os.path.join(settings_dictionary["OutputFolder"],outputCsvFileName)
-
-    settings_dictionary["polygonValidWhereClause"] = 'Valid = 1 AND TitleNumber1 IS NOT NULL'
 
     return settings_dictionary
 
@@ -115,48 +111,44 @@ def get_current_timestamp():
     return strNewTimeStamp
 
 def create_mail_merge_csv(settings_dictionary):
-    landowner_details_list = get_landowner_details_list(settings_dictionary)
+    landowner_details_list = get_landowner_details_list_from_view(settings_dictionary)
     csv_line_list = get_csv_line_list(landowner_details_list)
     write_csv_file(settings_dictionary, csv_line_list)
     output_warning(r'Created mail merge file {}'.format(settings_dictionary["outputCsvFilePath"]))
 
-def get_landowner_details_list(settings_dictionary):
+def get_landowner_details_list_from_view(settings_dictionary):
     landowner_details_list = list()
+    try:
+        conn = pyodbc.connect(
+        r'DRIVER={SQL Server};'
+        r'SERVER=kl-sql-005;'
+        r'DATABASE=GeoDB_UK;'
+        r'UID=sde;'
+        r'PWD=sde'
+        )
 
-    output_message('Getting landowner details...')
-    fields = ['Site_Identifier','Valid','SubStation',
-        'TitleNumber1','Tenure1','Proprietor1','Address1',     #3  to 6
-        'TitleNumber2','Tenure2','Proprietor2','Address2',     #7  to 10
-        'TitleNumber3','Tenure3','Proprietor3','Address3',     #11 to 14
-        'TitleNumber4','Tenure4','Proprietor4','Address4',     #15 to 18
-        'TitleNumber5','Tenure5','Proprietor5','Address5',     #19 to 22
-        'TitleNumber6','Tenure6','Proprietor6','Address6',     #23 to 26
-        'TitleNumber7','Tenure7','Proprietor7','Address7',     #27 to 30
-        'TitleNumber8','Tenure8','Proprietor8','Address8',     #31 to 34
-        'TitleNumber9','Tenure9','Proprietor9','Address9',     #35 to 38
-        'TitleNumber10','Tenure10','Proprietor10','Address10', #39 to 42
-        'TitleNumber11','Tenure11','Proprietor11','Address11', #43 to 46
-        'TitleNumber12','Tenure12','Proprietor12','Address12', #47 to 50
-        'TitleNumber13','Tenure13','Proprietor13','Address13', #51 to 52
-        'TitleNumber14','Tenure14','Proprietor14','Address14', #55 to 58
-        'TitleNumber15','Tenure15','Proprietor15','Address15', #59 to 62
-        'TitleNumber16','Tenure16','Proprietor16','Address16'] #63 to 66
+        cursor = conn.cursor()
 
-    for row in arcpy.da.SearchCursor(settings_dictionary["PolygonFeatureClassPath"], fields):
-        if (row[0]):
-            polygon_name = row[0].strip()
-            valid_row = row[1]
-            title_number_index = 3
-            if (valid_row):
-                while (title_number_index <= 63):
-                    if (row[title_number_index]):
-                        landowner_details_list = add_landowner_details(landowner_details_list, polygon_name, row[title_number_index].strip(), row[title_number_index+1].strip(), row[title_number_index+2].strip(), row[title_number_index+3].strip())
-                    title_number_index = title_number_index + 4
-            else:
-                output_warning('Invalid row for {}'.format(polygon_name))
-        else:
-            output_warning('Polygon data found with no Site_Identifier!')
-    return landowner_details_list
+        cursor.execute(sql_for_view_call())
+        for row in cursor.fetchall():
+            if (row[0]):
+                polygon_name = row[0].strip()
+                title_number = row[1]
+                tenure = row[2]
+                proprietor = row[3]
+                address = row[4]
+                landowner_details_list = add_landowner_details(landowner_details_list, polygon_name, title_number, tenure, proprietor, address)
+
+        conn.close()
+
+        return landowner_details_list
+
+    except Exception as e:
+        output_error(e)
+        conn.close()
+
+def sql_for_view_call():
+    return 'SELECT polygon.[Site_Identifier], land.Title_Number, land.Tenure, land.Proprietor, land.[Address], land.Revision_Date, land.NewSiteID FROM [sde].[tblStoragePolygonIdToLandRegistryIdMapping] map INNER JOIN [sde].[GB_STORAGE_PROPERTY_SKETCH_LAYER] polygon ON map.Storage_Polygon_ID = polygon.[OBJECTID] INNER JOIN [sde].[ENG_Land_Registry_Parcels_evw] land ON map.Land_Registry_ID = land.OBJECTID WHERE polygon.Valid = 1 ORDER BY Site_Identifier'
 
 def add_landowner_details(landowner_details_list, polygon_name, title_number, tenure, proprietor, site_location):
     for proprietor_details_text in proprietor.split(' AND '):
@@ -183,8 +175,8 @@ def csv_line_from_landowner_details(landowner_details):
 
 def write_csv_file(settings_dictionary, csv_line_list):
     output_message(r'Writing {}...'.format(settings_dictionary["outputCsvFilePath"]))
-    with open(settings_dictionary["outputCsvFilePath"], 'wb') as csvfile:
-        csv_file_writer = csv.writer(csvfile)##, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+    with open(settings_dictionary["outputCsvFilePath"], 'w') as csvfile:
+        csv_file_writer = csv.writer(csvfile, delimiter=',', lineterminator='\n')
         for csv_line in csv_line_list:
             csv_file_writer.writerow(csv_line)
 
