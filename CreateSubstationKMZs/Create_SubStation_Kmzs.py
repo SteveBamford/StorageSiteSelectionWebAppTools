@@ -3,6 +3,8 @@ import os
 import sys
 import datetime
 
+Debug = False
+
 def main():
     settings_dictionary = create_settings_dictionary()
     create_substation_kmzs(settings_dictionary)
@@ -23,7 +25,7 @@ def create_settings_dictionary():
     settings_dictionary["BaseTemplatePolygonsLayer"] = r"\\kl-fs-003\GIS_Storage\Projects\ENERGY_STORAGE\SITE_SELECTION\Templates\PolygonsBaseLayer.lyr"
     strNewTimeStamp = get_current_timestamp()
 
-    if (debug == True):
+    if (Debug == True):
         output_message("Running in debug mode")
         settings_dictionary["OutputFolder"] = r'\\kl-fs-003\GIS_Storage\Personal\SBamford\StorageSiteSelection\KMZTesting'
 
@@ -60,7 +62,7 @@ def create_substation_kmzs(settings_dictionary):
         else:
             output_warning('Null substation name found for substation {}'.format(substation_number))
         substation_number = substation_number + 1
-		
+
 def process_substation(settings_dictionary, substation_name):
     try:
         create_mxd_for_substation(settings_dictionary, substation_name)
@@ -176,15 +178,18 @@ def clean_substation_name(substation_name):
     return substation_name.replace('/', '')
 
 def output_message(message):
-    print message
+    if (Debug == True):
+        print message
     arcpy.AddMessage(message)
 
 def output_warning(message):
-    print message
+    if (Debug == True):
+        print message
     arcpy.AddWarning(message)
 
 def output_error(message):
-    print message
+    if (Debug == True):
+        print message
     arcpy.AddError(message)
 
 if __name__ == '__main__':

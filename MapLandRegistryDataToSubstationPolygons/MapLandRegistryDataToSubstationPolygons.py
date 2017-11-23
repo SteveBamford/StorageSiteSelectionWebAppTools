@@ -3,6 +3,8 @@ import os
 from datetime import datetime
 import pyodbc
 
+Debug = False
+
 class SiteIdentifierMappingDetails:
 
     def __init__(self, polygon_id):
@@ -231,15 +233,18 @@ def execute_sql_on_tblStoragePolygonIdToLandRegistryIdMapping(sql):
         conn.close()
 
 def output_message(message):
-    print message
+    if (Debug == True):
+        print message
     arcpy.AddMessage(message)
 
 def output_warning(message):
-    print message
+    if (Debug == True):
+        print message
     arcpy.AddWarning(message)
 
 def output_error(message):
-    print message
+    if (Debug == True):
+        print message
     arcpy.AddError(message)
 
 if __name__ == '__main__':

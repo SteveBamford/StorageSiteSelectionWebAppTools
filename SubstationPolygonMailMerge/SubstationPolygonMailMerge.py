@@ -5,6 +5,8 @@ import datetime
 import csv
 import pyodbc
 
+Debug = False
+
 class LandownerDetails:
 
     def __init__(self, polygon_name, title_number, tenure, landowner, address_text, site_location):
@@ -86,11 +88,10 @@ def main():
 
 def create_settings_dictionary():
 
-    debug = False #debug = True
     settings_dictionary = dict()
     settings_dictionary["OutputFolder"] = r'\\kl-fs-003\GIS_Storage\Projects\ENERGY_STORAGE\SITE_SELECTION\Outbox'
 
-    if (debug == True):
+    if (Debug == True):
         output_message("Running in debug mode")
         settings_dictionary["OutputFolder"] = r'\\kl-fs-003\GIS_Storage\Personal\SBamford\StorageSiteSelection\MailMerge'
 
@@ -184,15 +185,18 @@ def write_csv_file(settings_dictionary, csv_line_list):
             csv_file_writer.writerow(csv_line)
 
 def output_message(message):
-    print message
+    if (Debug == True):
+        print message
     arcpy.AddMessage(message)
 
 def output_warning(message):
-    print message
+    if (Debug == True):
+        print message
     arcpy.AddWarning(message)
 
 def output_error(message):
-    print message
+    if (Debug == True):
+        print message
     arcpy.AddError(message)
 
 if __name__ == '__main__':

@@ -5,13 +5,14 @@ import datetime
 import zipfile
 import shutil
 
+Debug = False
+
 def main():
     settings_dictionary = create_settings_dictionary()
     create_shapefile_and_kmz_for_valid_storage_polygons(settings_dictionary)
 
 def create_settings_dictionary():
 
-    debug = False ##debug = True
     settings_dictionary = dict()
     settings_dictionary["OutputFolder"] = r'\\kl-fs-003\GIS_Storage\Ancillary\RES_software_Services\Land_Registry\Outbox'
     settings_dictionary["OutputGDB"] = r'\\kl-fs-003\GIS_Storage\Ancillary\RES_software_Services\Land_Registry\Land_Registry.gdb'
@@ -27,7 +28,7 @@ def create_settings_dictionary():
 
     strRunName = "StorageSiteSelection"
 
-    if (debug == True):
+    if (Debug == True):
         output_message("Running in debug mode")
         settings_dictionary["OutputFolder"] = r'\\kl-fs-003\GIS_Storage\Personal\SBamford\ShapefileAndKmzTest\Outbox'
         settings_dictionary["OutputGDB"] = r'\\kl-fs-003\GIS_Storage\Personal\SBamford\ShapefileAndKmzTest\Testing.gdb'
@@ -215,14 +216,18 @@ def create_kmz(settings_dictionary):
 
 def report_issue(settings_dictionary):
     msg = 'ERROR: No polygons found in %s with query filter: %s' %(settings_dictionary["InputFeatureClassViewPath"], settings_dictionary["ViewWhereClause"])
+    if (Debug == True):
+        print msg
     arcpy.AddError(msg)
 
 def output_message(message):
-    print message
+    if (Debug == True):
+        print message
     arcpy.AddMessage(message)
 
 def output_warning(message):
-	print message
+    if (Debug == True):
+        print message
 	arcpy.AddWarning(message)
 
 def remove_temp_file(temp_file_path):
