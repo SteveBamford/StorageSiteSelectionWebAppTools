@@ -111,13 +111,15 @@ def get_current_timestamp():
     return strNewTimeStamp
 
 def create_mail_merge_csv(settings_dictionary):
+    output_message(r'Creating mail merge file {}'.format(settings_dictionary["outputCsvFilePath"]))
     landowner_details_list = get_landowner_details_list_from_view(settings_dictionary)
-    csv_line_list = get_csv_line_list(landowner_details_list)
+    csv_line_list = generate_csv_line_list(landowner_details_list)
     write_csv_file(settings_dictionary, csv_line_list)
     output_warning(r'Created mail merge file {}'.format(settings_dictionary["outputCsvFilePath"]))
 
 def get_landowner_details_list_from_view(settings_dictionary):
     landowner_details_list = list()
+    output_message(r'Getting landowner details from database call...')
     try:
         conn = pyodbc.connect(
         r'DRIVER={SQL Server};'
@@ -162,7 +164,8 @@ def add_landowner_details(landowner_details_list, polygon_name, title_number, te
         landowner_details_list.append(landowner_details)
     return landowner_details_list
 
-def get_csv_line_list(landowner_details_list):
+def generate_csv_line_list(landowner_details_list):
+    output_message(r'Generating csv line data...')
     csv_line_list = list()
     csv_line_list.append(['Substation','Title Number','Tenure','Name Prefix','Landowner first name','Address 1','Address 2','Address 3','Address 4','Address 5','Address 6','Location of site'])
     for landowner_details in landowner_details_list:
