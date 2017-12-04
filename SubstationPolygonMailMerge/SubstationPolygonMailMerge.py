@@ -151,7 +151,7 @@ def get_landowner_details_list_from_view(settings_dictionary):
         conn.close()
 
 def sql_for_view_call():
-    return 'SELECT polygon.[Site_Identifier], land.Title_Number, land.Tenure, land.Proprietor, land.[Address], land.Revision_Date, land.NewSiteID FROM [sde].[tblStoragePolygonIdToLandRegistryIdMapping] map INNER JOIN [sde].[GB_STORAGE_PROPERTY_SKETCH_LAYER] polygon ON map.Storage_Polygon_ID = polygon.[OBJECTID] INNER JOIN [sde].[ENG_Land_Registry_Parcels_evw] land ON map.Land_Registry_ID = land.OBJECTID WHERE polygon.Valid = 1 ORDER BY Site_Identifier'
+    return r"SELECT polygon.[Site_Identifier], land.Title_Number, land.Tenure, land.Proprietor, land.[Address], land.Revision_Date, land.NewSiteID FROM [sde].[tblStoragePolygonIdToLandRegistryIdMapping] map INNER JOIN [sde].[GB_STORAGE_PROPERTY_SKETCH_LAYER] polygon ON map.Storage_Polygon_ID = polygon.[OBJECTID] INNER JOIN [sde].[ENG_Land_Registry_Parcels_evw] land ON map.Land_Registry_ID = land.OBJECTID INNER JOIN [sde].[GB_STORAGE_SUBSTATION_201708] sub ON sub.Name = left(polygon.[Site_Identifier], charindex('_', polygon.[Site_Identifier]) - 1) WHERE polygon.Valid = 1 AND polygon.[Site_Identifier] IS NOT NULL AND sub.Status IS NOT NULL ORDER BY Site_Identifier"
 
 def add_landowner_details(landowner_details_list, polygon_name, title_number, tenure, proprietor, site_location):
     for proprietor_details_text in proprietor.split(' AND '):

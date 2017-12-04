@@ -11,7 +11,6 @@ def main():
 
 def create_settings_dictionary():
 
-    debug = False #debug = True
     settings_dictionary = dict()
     settings_dictionary["OutputFolder"] = r'\\kl-fs-003\GIS_Storage\Projects\ENERGY_STORAGE\SITE_SELECTION\Outbox\SubStationKMZs'
     settings_dictionary["InputDatabase"] = r'\\kl-fs-003\GIS_Storage\Ancillary\RES_software_Services\GeoDB_UK.sde'
@@ -31,8 +30,7 @@ def create_settings_dictionary():
 
     settings_dictionary["DateTimeStamp"] = get_current_timestamp()
 
-    settings_dictionary["subStationMinimumStatus"] = 3
-    settings_dictionary["subStationStatusWhereClause"] = "Status >= %s" %(settings_dictionary["subStationMinimumStatus"])
+    settings_dictionary["subStationStatusWhereClause"] = "Status IN NOT NULL"
     settings_dictionary["polygonValidWhereClause"] = 'Valid = 1'
     settings_dictionary["substationLoopWarningEveryXSubstations"] = 3
 
@@ -88,8 +86,16 @@ def create_mxd_for_substation(settings_dictionary, substation_name):
     arcpy.env.workspace = settings_dictionary["OutputFolder"]
     output_message('Opening base template MXD ({})...'.format(settings_dictionary["BaseTemplateMxd"])) #SDCBDBEUG
     mxd = arcpy.mapping.MapDocument(settings_dictionary["BaseTemplateMxd"])
+    if not mxd:
+        output_error('Cannot load base template MXD ({})'.format(settings_dictionary["BaseTemplateMxd"]))
+        return
+
     output_message('Getting Layers data frame...') #SDCBDBEUG
-    data_frame = arcpy.mapping.ListDataFrames(mxd, "Layers")[0]
+    data_frame_list = arcpy.mapping.ListDataFrames(mxd, "la*")
+
+    if len(data_frame_list) == 0:
+        output_error('No data frames found for Layers in base template MXD ({})'.format(settings_dictionary["BaseTemplateMxd"]))
+        return
 
     substation_layer = substation_layer_name(settings_dictionary, substation_name)
     output_message('Creating substation layer ({})'.format(substation_layer)) #SDCBDBEUG
@@ -99,6 +105,8 @@ def create_mxd_for_substation(settings_dictionary, substation_name):
         substation_where_clause(settings_dictionary, substation_name))
     substation_layer_object = arcpy.mapping.Layer(substation_layer)
     substation_base_layer = arcpy.mapping.Layer(settings_dictionary["BaseTemplateSubstationLayer"])
+    output_message('Selecting data frame...')  # SDCBDBEUG
+    data_frame = data_frame_list[0]
     output_message('Updating layer...')  # SDCBDBEUG
     arcpy.mapping.UpdateLayer(data_frame, substation_layer_object, substation_base_layer, True)
     output_message('Adding layer...')  # SDCBDBEUG

@@ -53,7 +53,7 @@ def create_settings_dictionary():
     settings_dictionary["DateTimeStamp"] = get_database_timestamp()
     settings_dictionary["RunIdentifier"] = r"%s_%s" %(strRunName,strNewTimeStamp)
 
-    settings_dictionary["ViewWhereClause"] = 'Valid = 1 AND Download_Land_Data > 0 AND SubStationStatus IS NOT NULL AND SubStationStatus = 3'
+    settings_dictionary["ViewWhereClause"] = 'Valid = 1 AND Download_Land_Data > 0 AND SubStationStatus IS NOT NULL'
 
     return settings_dictionary
 
