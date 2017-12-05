@@ -30,7 +30,7 @@ def create_settings_dictionary():
 
     settings_dictionary["DateTimeStamp"] = get_current_timestamp()
 
-    settings_dictionary["subStationStatusWhereClause"] = "Status IN NOT NULL"
+    settings_dictionary["subStationStatusWhereClause"] = "Status IS NOT NULL"
     settings_dictionary["polygonValidWhereClause"] = 'Valid = 1'
     settings_dictionary["substationLoopWarningEveryXSubstations"] = 3
 
@@ -75,7 +75,7 @@ def get_substation_name_list(settings_dictionary):
 
     fields = ['Name', 'Status']
     for row in arcpy.da.SearchCursor(settings_dictionary["SubstationFeatureClassPath"], fields):
-        if row[1] >= settings_dictionary["subStationMinimumStatus"]:
+        if row[1]:
             substation_name_list.append(row[0])
 
     return substation_name_list
